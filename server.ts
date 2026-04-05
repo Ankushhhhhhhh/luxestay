@@ -21,7 +21,7 @@ async function startServer() {
       const url = process.env.SUPABASE_URL;
       const key = process.env.SUPABASE_ANON_KEY;
       if (!url || !key) {
-        throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY are required");
+        return null;
       }
       supabase = createClient(url, key);
     }
@@ -32,13 +32,20 @@ async function startServer() {
 
   // API routes
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+    const isSupabaseConfigured = !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
+    res.json({ 
+      status: "ok", 
+      supabase: isSupabaseConfigured ? "configured" : "missing_keys" 
+    });
   });
 
   // Example Supabase endpoint
   app.get("/api/listings", async (req, res) => {
     try {
       const client = getSupabase();
+      if (!client) {
+        throw new Error("Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to Secrets.");
+      }
       // Assuming there is a 'listings' table in Supabase
       const { data, error } = await client.from("listings").select("*");
       if (error) throw error;

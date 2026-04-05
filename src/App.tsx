@@ -8,13 +8,13 @@ import Signup from './pages/Signup';
 import { AuthProvider } from './contexts/AuthContext';
 
 export default function App() {
-  const [backendStatus, setBackendStatus] = useState<string>('checking...');
+  const [backendStatus, setBackendStatus] = useState<{ status: string; supabase?: string }>({ status: 'checking...' });
 
   useEffect(() => {
     fetch('/api/health')
       .then(res => res.json())
-      .then(data => setBackendStatus(data.status))
-      .catch(() => setBackendStatus('error'));
+      .then(data => setBackendStatus(data))
+      .catch(() => setBackendStatus({ status: 'error' }));
   }, []);
 
   return (
@@ -22,9 +22,14 @@ export default function App() {
       <Router>
         <div className="min-h-screen bg-white font-sans text-neutral-800">
           <Navbar />
-          {backendStatus !== 'ok' && (
+          {backendStatus.status !== 'ok' && (
             <div className="bg-amber-50 text-amber-800 text-xs py-1 text-center font-medium">
-              Backend status: {backendStatus}. Make sure your Supabase keys are set in the Secrets panel.
+              Backend status: {backendStatus.status}. Make sure your Supabase keys are set in the Secrets panel.
+            </div>
+          )}
+          {backendStatus.status === 'ok' && backendStatus.supabase === 'missing_keys' && (
+            <div className="bg-rose-50 text-rose-800 text-xs py-1 text-center font-medium">
+              Supabase keys are missing! Please add SUPABASE_URL and SUPABASE_ANON_KEY to the Secrets panel in AI Studio.
             </div>
           )}
           <Routes>
